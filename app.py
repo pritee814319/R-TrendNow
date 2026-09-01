@@ -46,6 +46,20 @@ region_options = {
     "🇮🇳 India": "IN",
     "🇬🇧 United Kingdom": "GB",
     "🇦🇺 Australia": "AU"
+    "nz New Zealand": "NZ",
+    "de Germany": "DE",
+    "fr France": "FR",
+    "it Italy": "IT",
+    "es Spain": "ES",
+    "br Brazil": "BR",
+    "mx Mexico": "MX",
+    "jp Japan": "JP",
+    "kr South Korea": "KR",
+    "cn China": "CN",
+    "sg Singapore": "SG",
+    "ae United Arab Emirates": "AE",
+    "sa Saudi Arabia": "SA",
+    "za South Africa": "ZA"
 }
 
 selected_region = st.sidebar.selectbox(
