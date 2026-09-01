@@ -1,4 +1,3 @@
-```python
 import streamlit as st
 
 st.set_page_config(
@@ -14,4 +13,3 @@ st.success("Streamlit app is running!")
 st.write("If you can see this message, app.py is loading correctly.")
 
 st.write("Next step: we will test the YouTube API.")
-```
