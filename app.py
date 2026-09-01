@@ -46,7 +46,8 @@ region_options = {
     "🇮🇳 India": "IN",
     "🇬🇧 United Kingdom": "GB",
     "🇦🇺 Australia": "AU"
-    "de Germany": "DE",
+    "New zealand": "NZ",
+    "Germany": "DE",
     "fr France": "FR",
     "it Italy": "IT",
     "es Spain": "ES",
