@@ -12,7 +12,7 @@ BASE_URL = "https://www.googleapis.com/youtube/v3"
 # ============================================================
 
 def get_api_key():
-try:
+    try:
 return st.secrets["YOUTUBE_API_KEY"]
 except Exception:
 raise Exception(
