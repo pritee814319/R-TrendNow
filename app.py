@@ -3,9 +3,10 @@ import streamlit as st
 from categories import CATEGORIES
 from trending import get_trending_videos
 
-# ============================================================
-# PAGE CONFIG
-# ============================================================
+
+# --------------------------------------------------
+# PAGE CONFIGURATION
+# --------------------------------------------------
 
 st.set_page_config(
     page_title="TrendHub",
@@ -13,24 +14,24 @@ st.set_page_config(
     layout="wide"
 )
 
-# ============================================================
-# HEADER
-# ============================================================
+
+# --------------------------------------------------
+# TITLE
+# --------------------------------------------------
 
 st.title("🔥 TrendHub")
 
 st.caption(
-    "Discover the most interesting and fast-growing YouTube videos."
+    "Discover the most trending YouTube videos by country, "
+    "category and time period."
 )
 
-# ============================================================
-# SIDEBAR
-# ============================================================
 
-st.sidebar.header("TrendHub Settings")
+# --------------------------------------------------
+# COUNTRY LIST
+# --------------------------------------------------
 
-# Country
-countries = {
+COUNTRIES = {
     "🇨🇦 Canada": "CA",
     "🇺🇸 United States": "US",
     "🇬🇧 United Kingdom": "GB",
@@ -49,49 +50,52 @@ countries = {
     "🇸🇬 Singapore": "SG",
     "🇦🇪 United Arab Emirates": "AE",
     "🇸🇦 Saudi Arabia": "SA",
-    "🇿🇦 South Africa": "ZA",
+    "🇿🇦 South Africa": "ZA"
 }
+
+
+# --------------------------------------------------
+# SIDEBAR
+# --------------------------------------------------
+
+st.sidebar.header("⚙️ TrendHub Settings")
 
 
 selected_country = st.sidebar.selectbox(
     "🌎 Country",
-    list(countries.keys())
+    list(COUNTRIES.keys())
 )
 
-region_code = countries[
-    selected_country
-]
+region_code = COUNTRIES[selected_country]
 
 
-# Time window
-time_windows = {
+time_options = {
     "Last 6 hours": 6,
     "Last 12 hours": 12,
     "Last 24 hours": 24,
     "Last 48 hours": 48,
-    "Last 7 days": 168,
+    "Last 7 days": 168
 }
 
 
 selected_time = st.sidebar.selectbox(
-    "⏱️ Time Window",
-    list(time_windows.keys()),
+    "⏱️ Time Period",
+    list(time_options.keys()),
     index=2
 )
 
-hours = time_windows[
-    selected_time
-]
+hours = time_options[selected_time]
 
 
-# Category
+category_names = list(CATEGORIES.keys())
+
+
 selected_category = st.sidebar.selectbox(
     "📂 Category",
-    list(CATEGORIES.keys())
+    category_names
 )
 
 
-# Number
 number_of_videos = st.sidebar.selectbox(
     "🏆 Number of Videos",
     [5, 10],
@@ -99,16 +103,14 @@ number_of_videos = st.sidebar.selectbox(
 )
 
 
-# Refresh
 refresh = st.sidebar.button(
-    "🔄 Refresh Trends",
-    width="stretch"
+    "🔄 Refresh Trends"
 )
 
 
-# ============================================================
-# CATEGORY DATA
-# ============================================================
+# --------------------------------------------------
+# SELECT CATEGORY DATA
+# --------------------------------------------------
 
 category_data = CATEGORIES.get(
     selected_category,
@@ -125,34 +127,24 @@ category_id = category_data.get(
 )
 
 
-# General trending uses YouTube's
-# regional mostPopular chart.
-is_general_trending = (
-    selected_category
-    == "🔥 Trending"
-)
-
-
-# ============================================================
-# INFORMATION
-# ============================================================
+# --------------------------------------------------
+# SHOW CURRENT SETTINGS
+# --------------------------------------------------
 
 st.info(
-    f"Showing **{number_of_videos}** "
-    f"top videos for **{selected_category}** "
-    f"in **{selected_country}** "
-    f"from the **{selected_time}**."
+    f"Showing **{selected_category}** videos for "
+    f"**{selected_country}** from the **{selected_time}**."
 )
 
 
-# ============================================================
+# --------------------------------------------------
 # LOAD VIDEOS
-# ============================================================
+# --------------------------------------------------
 
 try:
 
     with st.spinner(
-        "🔎 Finding trending videos..."
+        "🔎 Finding the latest trending videos..."
     ):
 
         videos = get_trending_videos(
@@ -160,119 +152,163 @@ try:
             region_code=region_code,
             hours=hours,
             limit=number_of_videos,
-            category_id=category_id,
-            use_popular=is_general_trending
+            category_id=category_id
         )
 
 except Exception as e:
 
     st.error(
-        "❌ Unable to load trending videos."
+        f"❌ Unable to load YouTube trends:\n\n{e}"
     )
-
-    st.exception(e)
 
     st.stop()
 
 
-# ============================================================
+# --------------------------------------------------
 # NO RESULTS
-# ============================================================
+# --------------------------------------------------
 
 if not videos:
 
     st.warning(
-        "No matching videos were found "
-        "for this country, category and time window."
+        "No videos were found for the selected "
+        "country, category and time period."
     )
 
     st.stop()
 
 
-# ============================================================
+# --------------------------------------------------
 # RESULTS
-# ============================================================
+# --------------------------------------------------
 
 st.success(
     f"🔥 Found {len(videos)} trending videos"
 )
 
 
-for index, video in enumerate(
-    videos,
-    start=1
-):
+for index, video in enumerate(videos, start=1):
 
-    st.markdown(
-        f"## #{index} — {video['title']}"
+    video_id = video.get("id")
+
+    title = video.get(
+        "title",
+        "Untitled video"
     )
 
-    col1, col2 = st.columns(
-        [1, 2]
+    channel = video.get(
+        "channel",
+        "Unknown channel"
     )
 
-    # --------------------------------------------------------
-    # THUMBNAIL
-    # --------------------------------------------------------
+    thumbnail = video.get(
+        "thumbnail"
+    )
 
-    with col1:
+    views = video.get(
+        "views",
+        0
+    )
 
-        if video.get(
-            "thumbnail"
-        ):
+    likes = video.get(
+        "likes",
+        0
+    )
 
-            st.image(
-                video["thumbnail"],
-                width="stretch"
+    comments = video.get(
+        "comments",
+        0
+    )
+
+    age_hours = video.get(
+        "age_hours",
+        0
+    )
+
+    views_per_hour = video.get(
+        "views_per_hour",
+        0
+    )
+
+    trend_score = video.get(
+        "trend_score",
+        0
+    )
+
+
+    # --------------------------------------------------
+    # VIDEO CONTAINER
+    # --------------------------------------------------
+
+    with st.container():
+
+        col1, col2 = st.columns(
+            [1, 3]
+        )
+
+
+        # --------------------------------------------------
+        # THUMBNAIL
+        # --------------------------------------------------
+
+        with col1:
+
+            if thumbnail:
+
+                st.image(
+                    thumbnail,
+                    width="stretch"
+                )
+
+
+        # --------------------------------------------------
+        # VIDEO INFORMATION
+        # --------------------------------------------------
+
+        with col2:
+
+            st.subheader(
+                f"#{index} {title}"
             )
 
+            st.write(
+                f"📺 **Channel:** {channel}"
+            )
 
-    # --------------------------------------------------------
-    # INFORMATION
-    # --------------------------------------------------------
+            st.write(
+                f"👁️ **Views:** {views:,}   "
+                f"❤️ **Likes:** {likes:,}   "
+                f"💬 **Comments:** {comments:,}"
+            )
 
-    with col2:
+            st.write(
+                f"⏱️ **Age:** {age_hours:.1f} hours   "
+                f"🚀 **Views/hour:** {views_per_hour:,.0f}"
+            )
 
-        st.write(
-            f"📺 **Channel:** "
-            f"{video['channel']}"
-        )
+            st.write(
+                f"🔥 **Trend Score:** {trend_score}"
+            )
 
-        st.write(
-            f"👁️ **Views:** "
-            f"{video['views']:,}"
-        )
+            if video_id:
 
-        st.write(
-            f"❤️ **Likes:** "
-            f"{video['likes']:,}"
-        )
+                youtube_url = (
+                    f"https://www.youtube.com/watch?v={video_id}"
+                )
 
-        st.write(
-            f"💬 **Comments:** "
-            f"{video['comments']:,}"
-        )
+                st.link_button(
+                    "▶️ Watch on YouTube",
+                    youtube_url
+                )
 
-        st.write(
-            f"⏱️ **Age:** "
-            f"{video['hours_old']:.1f} hours"
-        )
+        st.divider()
 
-        st.write(
-            f"🚀 **Views/hour:** "
-            f"{video['views_per_hour']:,.0f}"
-        )
 
-        st.write(
-            f"🔥 **Trend Score:** "
-            f"{video['trend_score']:,.0f}"
-        )
+# --------------------------------------------------
+# FOOTER
+# --------------------------------------------------
 
-        st.link_button(
-            "▶️ Watch on YouTube",
-            f"https://www.youtube.com/watch?v={video['video_id']}",
-            width="content"
-        )
-
-    st.divider()
-
+st.caption(
+    "TrendHub uses the YouTube Data API to discover "
+    "and rank trending videos."
+)
