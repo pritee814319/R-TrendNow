@@ -1,9 +1,7 @@
-
 import streamlit as st
 
 from categories import CATEGORIES
-     from trending import get_trending_videos
-
+from trending import get_trending_videos
 
 # ============================================================
 # PAGE CONFIG
@@ -15,7 +13,6 @@ st.set_page_config(
     layout="wide"
 )
 
-
 # ============================================================
 # HEADER
 # ============================================================
@@ -26,13 +23,11 @@ st.caption(
     "Discover the most interesting and fast-growing YouTube videos."
 )
 
-
 # ============================================================
 # SIDEBAR
 # ============================================================
 
 st.sidebar.header("TrendHub Settings")
-
 
 # Country
 countries = {
