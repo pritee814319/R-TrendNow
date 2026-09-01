@@ -13,14 +13,19 @@ from youtube_service import (
 
 def get_video_id(video):
 
+    if not isinstance(video, dict):
+        return None
+
     video_id = video.get("id")
 
-    # Search API format
+    # Search API:
+    # "id": {"kind": "youtube#video", "videoId": "..."}
     if isinstance(video_id, dict):
 
         return video_id.get("videoId")
 
-    # Videos API format
+    # Videos API:
+    # "id": "..."
     if isinstance(video_id, str):
 
         return video_id
@@ -39,31 +44,76 @@ def calculate_trending_score(
     hours_old
 ):
 
+    views = max(
+        int(views or 0),
+        0
+    )
+
+    likes = max(
+        int(likes or 0),
+        0
+    )
+
+    comments = max(
+        int(comments or 0),
+        0
+    )
+
     hours_old = max(
-        hours_old,
+        float(hours_old or 0),
         0.5
     )
 
-    views_per_hour = views / hours_old
+
+    # --------------------------------------------------------
+    # VIEW VELOCITY
+    # --------------------------------------------------------
+
+    views_per_hour = (
+        views / hours_old
+    )
+
+
+    # --------------------------------------------------------
+    # ENGAGEMENT
+    # --------------------------------------------------------
 
     engagement = (
         likes +
         (comments * 2)
     )
 
+
+    # --------------------------------------------------------
+    # RECENCY
+    # --------------------------------------------------------
+
     recency_factor = (
         1 /
         (1 + hours_old / 24)
     )
 
+
+    # --------------------------------------------------------
+    # FINAL SCORE
+    # --------------------------------------------------------
+
     score = (
+
         (views_per_hour * 0.60)
+
         +
+
         (engagement * 0.25)
+
         +
+
         (views * 0.10)
+
         +
+
         (recency_factor * 100000)
+
     )
 
     return score
@@ -85,21 +135,59 @@ def get_trending_videos(
 
 
     # ========================================================
-    # 1. COUNTRY'S MOST POPULAR VIDEOS
+    # VALIDATE REGION
     # ========================================================
 
-    popular_videos = get_most_popular_videos(
+    if not region_code:
 
-        region_code=region_code,
+        region_code = "CA"
 
-        max_results=50,
+    region_code = str(
+        region_code
+    ).upper()
 
-        category_id=category_id
-    )
 
-    all_videos.extend(
-        popular_videos
-    )
+    # ========================================================
+    # VALIDATE KEYWORDS
+    # ========================================================
+
+    if not isinstance(
+        keywords,
+        list
+    ):
+
+        keywords = []
+
+
+    # ========================================================
+    # 1. COUNTRY POPULAR VIDEOS
+    # ========================================================
+
+    try:
+
+        popular_videos = get_most_popular_videos(
+
+            region_code=region_code,
+
+            max_results=50,
+
+            category_id=category_id
+
+        )
+
+        if isinstance(
+            popular_videos,
+            list
+        ):
+
+            all_videos.extend(
+                popular_videos
+            )
+
+    except Exception:
+
+        # Continue with recent-video search.
+        pass
 
 
     # ========================================================
@@ -108,22 +196,48 @@ def get_trending_videos(
 
     for keyword in keywords:
 
-        recent_videos = search_recent_videos(
+        if not isinstance(
+            keyword,
+            str
+        ):
 
-            query=keyword,
+            continue
 
-            region_code=region_code,
+        keyword = keyword.strip()
 
-            hours=hours,
+        if not keyword:
 
-            max_results=25,
+            continue
 
-            category_id=category_id
-        )
 
-        all_videos.extend(
-            recent_videos
-        )
+        try:
+
+            recent_videos = search_recent_videos(
+
+                query=keyword,
+
+                region_code=region_code,
+
+                hours=hours,
+
+                max_results=25,
+
+                category_id=category_id
+
+            )
+
+            if isinstance(
+                recent_videos,
+                list
+            ):
+
+                all_videos.extend(
+                    recent_videos
+                )
+
+        except Exception:
+
+            continue
 
 
     # ========================================================
@@ -132,15 +246,29 @@ def get_trending_videos(
 
     unique_videos = {}
 
+
     for video in all_videos:
 
-        video_id = get_video_id(video)
+        if not isinstance(
+            video,
+            dict
+        ):
 
-        if video_id:
+            continue
 
-            unique_videos[
-                video_id
-            ] = video
+
+        video_id = get_video_id(
+            video
+        )
+
+        if not video_id:
+
+            continue
+
+
+        unique_videos[
+            video_id
+        ] = video
 
 
     videos = list(
@@ -161,9 +289,18 @@ def get_trending_videos(
         unique_videos.keys()
     )
 
+
     statistics = get_video_statistics(
         video_ids
     )
+
+
+    if not isinstance(
+        statistics,
+        dict
+    ):
+
+        statistics = {}
 
 
     # ========================================================
@@ -172,6 +309,7 @@ def get_trending_videos(
 
     results = []
 
+
     now = datetime.now(
         timezone.utc
     )
@@ -179,12 +317,26 @@ def get_trending_videos(
 
     for video in videos:
 
-        video_id = get_video_id(video)
+        if not isinstance(
+            video,
+            dict
+        ):
+
+            continue
+
+
+        video_id = get_video_id(
+            video
+        )
 
         if not video_id:
 
             continue
 
+
+        # ----------------------------------------------------
+        # SNIPPET
+        # ----------------------------------------------------
 
         snippet = video.get(
             "snippet",
@@ -192,11 +344,35 @@ def get_trending_videos(
         )
 
 
+        if not isinstance(
+            snippet,
+            dict
+        ):
+
+            continue
+
+
+        # ----------------------------------------------------
+        # STATISTICS
+        # ----------------------------------------------------
+
         stats = statistics.get(
             video_id,
             {}
         )
 
+
+        if not isinstance(
+            stats,
+            dict
+        ):
+
+            stats = {}
+
+
+        # ----------------------------------------------------
+        # PUBLISHED DATE
+        # ----------------------------------------------------
 
         published_string = snippet.get(
             "publishedAt"
@@ -208,14 +384,28 @@ def get_trending_videos(
             continue
 
 
-        published_at = datetime.fromisoformat(
+        try:
 
-            published_string.replace(
-                "Z",
-                "+00:00"
+            published_at = datetime.fromisoformat(
+
+                published_string.replace(
+                    "Z",
+                    "+00:00"
+                )
+
             )
-        )
 
+        except (
+            ValueError,
+            TypeError
+        ):
+
+            continue
+
+
+        # ----------------------------------------------------
+        # AGE
+        # ----------------------------------------------------
 
         hours_old = (
 
@@ -230,29 +420,89 @@ def get_trending_videos(
         )
 
 
-        views = stats.get(
-            "viewCount",
-            0
-        )
+        # ----------------------------------------------------
+        # IMPORTANT:
+        # REMOVE VIDEOS OLDER THAN SELECTED WINDOW
+        # ----------------------------------------------------
+
+        # Popular videos can be much older than the selected
+        # time window. Do not let them dominate recent results.
+
+        if hours_old > hours:
+
+            continue
 
 
-        likes = stats.get(
-            "likeCount",
-            0
-        )
+        # ----------------------------------------------------
+        # STATISTICS VALUES
+        # ----------------------------------------------------
+
+        try:
+
+            views = int(
+                stats.get(
+                    "viewCount",
+                    0
+                ) or 0
+            )
+
+        except (
+            ValueError,
+            TypeError
+        ):
+
+            views = 0
 
 
-        comments = stats.get(
-            "commentCount",
-            0
-        )
+        try:
 
+            likes = int(
+                stats.get(
+                    "likeCount",
+                    0
+                ) or 0
+            )
+
+        except (
+            ValueError,
+            TypeError
+        ):
+
+            likes = 0
+
+
+        try:
+
+            comments = int(
+                stats.get(
+                    "commentCount",
+                    0
+                ) or 0
+            )
+
+        except (
+            ValueError,
+            TypeError
+        ):
+
+            comments = 0
+
+
+        # ----------------------------------------------------
+        # VIEW VELOCITY
+        # ----------------------------------------------------
 
         views_per_hour = (
+
             views /
             hours_old
+
         )
 
+
+        # ----------------------------------------------------
+        # TREND SCORE
+        # ----------------------------------------------------
 
         score = calculate_trending_score(
 
@@ -263,8 +513,51 @@ def get_trending_videos(
             comments=comments,
 
             hours_old=hours_old
+
         )
 
+
+        # ----------------------------------------------------
+        # THUMBNAIL
+        # ----------------------------------------------------
+
+        thumbnails = snippet.get(
+            "thumbnails",
+            {}
+        )
+
+
+        if not isinstance(
+            thumbnails,
+            dict
+        ):
+
+            thumbnails = {}
+
+
+        high_thumbnail = thumbnails.get(
+            "high",
+            {}
+        )
+
+
+        if not isinstance(
+            high_thumbnail,
+            dict
+        ):
+
+            high_thumbnail = {}
+
+
+        thumbnail_url = high_thumbnail.get(
+            "url",
+            ""
+        )
+
+
+        # ----------------------------------------------------
+        # RESULT
+        # ----------------------------------------------------
 
         results.append({
 
@@ -305,36 +598,33 @@ def get_trending_videos(
                 score,
 
             "thumbnail":
-                snippet
-                .get(
-                    "thumbnails",
-                    {}
-                )
-                .get(
-                    "high",
-                    {}
-                )
-                .get(
-                    "url",
-                    ""
-                ),
+                thumbnail_url,
 
             "url":
                 f"https://www.youtube.com/watch?v={video_id}"
+
         })
 
 
     # ========================================================
-    # 6. SORT BY TRENDING SCORE
+    # 6. SORT
     # ========================================================
 
     results.sort(
 
-        key=lambda x:
-            x["trend_score"],
+        key=lambda video:
+            video.get(
+                "trend_score",
+                0
+            ),
 
         reverse=True
+
     )
 
+
+    # ========================================================
+    # 7. RETURN TOP RESULTS
+    # ========================================================
 
     return results[:limit]
