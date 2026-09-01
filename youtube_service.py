@@ -1,14 +1,24 @@
 import requests
 import streamlit as st
+
 from datetime import datetime, timedelta, timezone
 
 
 BASE_URL = "https://www.googleapis.com/youtube/v3"
 
 
+# ============================================================
+# API KEY
+# ============================================================
+
 def get_api_key():
+
     return st.secrets["YOUTUBE_API_KEY"]
 
+
+# ============================================================
+# SEARCH RECENT VIDEOS
+# ============================================================
 
 def search_recent_videos(
     query,
@@ -17,9 +27,6 @@ def search_recent_videos(
     max_results=25,
     category_id=None
 ):
-    """
-    Search YouTube for recently published videos.
-    """
 
     api_key = get_api_key()
 
@@ -42,7 +49,9 @@ def search_recent_videos(
         "key": api_key,
     }
 
+    # Category filter
     if category_id:
+
         params["videoCategoryId"] = category_id
 
     response = requests.get(
@@ -52,35 +61,81 @@ def search_recent_videos(
     )
 
     if response.status_code != 200:
+
         raise Exception(
             f"YouTube search error: "
             f"{response.status_code} - "
             f"{response.text}"
         )
 
-    return response.json().get("items", [])
+    return response.json().get(
+        "items",
+        []
+    )
 
+
+# ============================================================
+# GET COUNTRY'S MOST POPULAR VIDEOS
+# ============================================================
+
+def get_most_popular_videos(
+    region_code="CA",
+    max_results=25,
+    category_id=None
+):
+
+    api_key = get_api_key()
+
+    url = f"{BASE_URL}/videos"
+
+    params = {
+        "part": "snippet,statistics",
+        "chart": "mostPopular",
+        "regionCode": region_code,
+        "maxResults": max_results,
+        "key": api_key,
+    }
+
+    # Category
+    if category_id:
+
+        params["videoCategoryId"] = category_id
+
+    response = requests.get(
+        url,
+        params=params,
+        timeout=30
+    )
+
+    if response.status_code != 200:
+
+        raise Exception(
+            f"YouTube popular videos error: "
+            f"{response.status_code} - "
+            f"{response.text}"
+        )
+
+    return response.json().get(
+        "items",
+        []
+    )
+
+
+# ============================================================
+# VIDEO STATISTICS
+# ============================================================
 
 def get_video_statistics(video_ids):
-    """
-    Get current statistics for YouTube videos.
-
-    YouTube allows a maximum of 50 video IDs
-    in one videos.list request, so we process
-    the IDs in batches of 50.
-    """
 
     if not video_ids:
+
         return {}
 
     api_key = get_api_key()
 
     statistics = {}
 
-    # --------------------------------------------------------
-    # PROCESS VIDEO IDS IN BATCHES OF 50
-    # --------------------------------------------------------
-
+    # YouTube allows maximum 50 IDs per request
     for start in range(
         0,
         len(video_ids),
@@ -94,7 +149,7 @@ def get_video_statistics(video_ids):
         url = f"{BASE_URL}/videos"
 
         params = {
-            "part": "statistics,contentDetails",
+            "part": "statistics",
             "id": ",".join(batch),
             "key": api_key,
         }
@@ -106,6 +161,7 @@ def get_video_statistics(video_ids):
         )
 
         if response.status_code != 200:
+
             raise Exception(
                 f"YouTube statistics error: "
                 f"{response.status_code} - "
@@ -119,9 +175,7 @@ def get_video_statistics(video_ids):
             []
         ):
 
-            video_id = item.get(
-                "id"
-            )
+            video_id = item.get("id")
 
             stats = item.get(
                 "statistics",
@@ -129,6 +183,7 @@ def get_video_statistics(video_ids):
             )
 
             statistics[video_id] = {
+
                 "viewCount": int(
                     stats.get(
                         "viewCount",
