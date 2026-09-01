@@ -4,9 +4,9 @@ from categories import CATEGORIES
 from trending import get_trending_videos
 
 
-# --------------------------------------------------
+# ==================================================
 # PAGE CONFIGURATION
-# --------------------------------------------------
+# ==================================================
 
 st.set_page_config(
     page_title="TrendHub",
@@ -15,23 +15,24 @@ st.set_page_config(
 )
 
 
-# --------------------------------------------------
+# ==================================================
 # TITLE
-# --------------------------------------------------
+# ==================================================
 
 st.title("🔥 TrendHub")
 
 st.caption(
-    "Discover the most trending YouTube videos by country, "
-    "category and time period."
+    "Discover the most trending YouTube videos by "
+    "country, category and time period."
 )
 
 
-# --------------------------------------------------
-# COUNTRY LIST
-# --------------------------------------------------
+# ==================================================
+# COUNTRIES
+# ==================================================
 
 COUNTRIES = {
+
     "🇨🇦 Canada": "CA",
     "🇺🇸 United States": "US",
     "🇬🇧 United Kingdom": "GB",
@@ -54,22 +55,35 @@ COUNTRIES = {
 }
 
 
-# --------------------------------------------------
+# ==================================================
 # SIDEBAR
+# ==================================================
+
+st.sidebar.header(
+    "⚙️ TrendHub Settings"
+)
+
+
 # --------------------------------------------------
-
-st.sidebar.header("⚙️ TrendHub Settings")
-
+# COUNTRY
+# --------------------------------------------------
 
 selected_country = st.sidebar.selectbox(
     "🌎 Country",
     list(COUNTRIES.keys())
 )
 
-region_code = COUNTRIES[selected_country]
+region_code = COUNTRIES[
+    selected_country
+]
 
+
+# --------------------------------------------------
+# TIME PERIOD
+# --------------------------------------------------
 
 time_options = {
+
     "Last 6 hours": 6,
     "Last 12 hours": 12,
     "Last 24 hours": 24,
@@ -84,10 +98,18 @@ selected_time = st.sidebar.selectbox(
     index=2
 )
 
-hours = time_options[selected_time]
+hours = time_options[
+    selected_time
+]
 
 
-category_names = list(CATEGORIES.keys())
+# --------------------------------------------------
+# CATEGORY
+# --------------------------------------------------
+
+category_names = list(
+    CATEGORIES.keys()
+)
 
 
 selected_category = st.sidebar.selectbox(
@@ -96,6 +118,10 @@ selected_category = st.sidebar.selectbox(
 )
 
 
+# --------------------------------------------------
+# NUMBER OF VIDEOS
+# --------------------------------------------------
+
 number_of_videos = st.sidebar.selectbox(
     "🏆 Number of Videos",
     [5, 10],
@@ -103,43 +129,56 @@ number_of_videos = st.sidebar.selectbox(
 )
 
 
+# --------------------------------------------------
+# REFRESH
+# --------------------------------------------------
+
 refresh = st.sidebar.button(
     "🔄 Refresh Trends"
 )
 
 
-# --------------------------------------------------
-# SELECT CATEGORY DATA
-# --------------------------------------------------
+# ==================================================
+# CATEGORY DATA
+# ==================================================
 
 category_data = CATEGORIES.get(
     selected_category,
     {}
 )
 
+
 keywords = category_data.get(
     "keywords",
     []
 )
+
 
 category_id = category_data.get(
     "category_id"
 )
 
 
-# --------------------------------------------------
-# SHOW CURRENT SETTINGS
-# --------------------------------------------------
-
-st.info(
-    f"Showing **{selected_category}** videos for "
-    f"**{selected_country}** from the **{selected_time}**."
+mode = category_data.get(
+    "mode",
+    "search"
 )
 
 
-# --------------------------------------------------
+# ==================================================
+# SHOW SETTINGS
+# ==================================================
+
+st.info(
+    f"Showing **{selected_category}** videos for "
+    f"**{selected_country}** from "
+    f"**{selected_time}**."
+)
+
+
+# ==================================================
 # LOAD VIDEOS
-# --------------------------------------------------
+# ==================================================
 
 try:
 
@@ -148,12 +187,20 @@ try:
     ):
 
         videos = get_trending_videos(
+
             keywords=keywords,
+
             region_code=region_code,
+
             hours=hours,
+
             limit=number_of_videos,
-            category_id=category_id
+
+            category_id=category_id,
+
+            mode=mode
         )
+
 
 except Exception as e:
 
@@ -164,9 +211,9 @@ except Exception as e:
     st.stop()
 
 
-# --------------------------------------------------
+# ==================================================
 # NO RESULTS
-# --------------------------------------------------
+# ==================================================
 
 if not videos:
 
@@ -178,18 +225,27 @@ if not videos:
     st.stop()
 
 
-# --------------------------------------------------
-# RESULTS
-# --------------------------------------------------
+# ==================================================
+# RESULTS COUNT
+# ==================================================
 
 st.success(
     f"🔥 Found {len(videos)} trending videos"
 )
 
 
-for index, video in enumerate(videos, start=1):
+# ==================================================
+# DISPLAY VIDEOS
+# ==================================================
 
-    video_id = video.get("id")
+for index, video in enumerate(
+    videos,
+    start=1
+):
+
+    video_id = video.get(
+        "id"
+    )
 
     title = video.get(
         "title",
@@ -236,9 +292,9 @@ for index, video in enumerate(videos, start=1):
     )
 
 
-    # --------------------------------------------------
+    # ==================================================
     # VIDEO CONTAINER
-    # --------------------------------------------------
+    # ==================================================
 
     with st.container():
 
@@ -262,7 +318,7 @@ for index, video in enumerate(videos, start=1):
 
 
         # --------------------------------------------------
-        # VIDEO INFORMATION
+        # INFORMATION
         # --------------------------------------------------
 
         with col2:
@@ -290,10 +346,12 @@ for index, video in enumerate(videos, start=1):
                 f"🔥 **Trend Score:** {trend_score}"
             )
 
+
             if video_id:
 
                 youtube_url = (
-                    f"https://www.youtube.com/watch?v={video_id}"
+                    "https://www.youtube.com/watch?v="
+                    + video_id
                 )
 
                 st.link_button(
@@ -301,12 +359,13 @@ for index, video in enumerate(videos, start=1):
                     youtube_url
                 )
 
+
         st.divider()
 
 
-# --------------------------------------------------
+# ==================================================
 # FOOTER
-# --------------------------------------------------
+# ==================================================
 
 st.caption(
     "TrendHub uses the YouTube Data API to discover "
