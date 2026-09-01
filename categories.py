@@ -1,39 +1,92 @@
-
 CATEGORIES = {
     "🔥 Trending": {
-        "query": "trending popular videos",
-        "category_id": "0",
+        "keywords": [
+            "viral",
+            "trending",
+            "popular",
+            "breaking"
+        ]
     },
+
     "🍔 Food": {
-        "query": "food recipes cooking",
-        "category_id": "0",
+        "keywords": [
+            "food",
+            "recipe",
+            "cooking",
+            "street food",
+            "food viral"
+        ]
     },
+
     "💃 Dance": {
-        "query": "dance",
-        "category_id": "0",
+        "keywords": [
+            "dance",
+            "dance trend",
+            "viral dance",
+            "choreography",
+            "dance challenge"
+        ]
     },
+
     "❤️ Health": {
-        "query": "health fitness wellness",
-        "category_id": "0",
+        "keywords": [
+            "health",
+            "fitness",
+            "workout",
+            "wellness",
+            "healthy lifestyle"
+        ]
     },
+
     "🎵 Music": {
-        "query": "music",
-        "category_id": "10",
+        "keywords": [
+            "new music",
+            "new song",
+            "music",
+            "official music video",
+            "viral song"
+        ],
+        "category_id": "10"
     },
+
     "🎨 Art": {
-        "query": "art",
-        "category_id": "0",
+        "keywords": [
+            "art",
+            "drawing",
+            "digital art",
+            "artist",
+            "art tutorial"
+        ]
     },
+
     "🖼️ Paintings": {
-        "query": "painting drawing",
-        "category_id": "0",
+        "keywords": [
+            "painting",
+            "oil painting",
+            "watercolor painting",
+            "acrylic painting",
+            "painting tutorial"
+        ]
     },
+
     "👧 Kids": {
-        "query": "kids family",
-        "category_id": "0",
+        "keywords": [
+            "kids",
+            "kids activities",
+            "kids entertainment",
+            "family",
+            "children"
+        ]
     },
+
     "📰 News": {
-        "query": "news",
-        "category_id": "25",
-    },
+        "keywords": [
+            "breaking news",
+            "latest news",
+            "news today",
+            "world news",
+            "current news"
+        ],
+        "category_id": "25"
+    }
 }
