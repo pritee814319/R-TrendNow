@@ -9,33 +9,30 @@ from youtube_service import (
 )
 
 
-# --------------------------------------------------
+# ==================================================
 # GET VIDEO ID
-# --------------------------------------------------
+# ==================================================
 
 def get_video_id(video):
 
     video_id = video.get("id")
 
     if isinstance(video_id, dict):
-
         return video_id.get("videoId")
 
     if isinstance(video_id, str):
-
         return video_id
 
     return None
 
 
-# --------------------------------------------------
+# ==================================================
 # SAFE INTEGER
-# --------------------------------------------------
+# ==================================================
 
 def safe_int(value, default=0):
 
     try:
-
         return int(value)
 
     except (TypeError, ValueError):
@@ -43,9 +40,9 @@ def safe_int(value, default=0):
         return default
 
 
-# --------------------------------------------------
+# ==================================================
 # HOURS SINCE PUBLISHED
-# --------------------------------------------------
+# ==================================================
 
 def hours_since_published(published_at):
 
@@ -78,9 +75,9 @@ def hours_since_published(published_at):
         return 999999
 
 
-# --------------------------------------------------
-# CHECK IF VIDEO IS RECENT
-# --------------------------------------------------
+# ==================================================
+# CHECK RECENT
+# ==================================================
 
 def is_recent(video, hours):
 
@@ -104,15 +101,61 @@ def is_recent(video, hours):
     return age_hours <= hours
 
 
-# --------------------------------------------------
+# ==================================================
+# CATEGORY RELEVANCE
+# ==================================================
+
+def calculate_relevance(
+    video,
+    keywords
+):
+
+    snippet = video.get(
+        "snippet",
+        {}
+    )
+
+    title = snippet.get(
+        "title",
+        ""
+    ).lower()
+
+    description = snippet.get(
+        "description",
+        ""
+    ).lower()
+
+    text = f"{title} {description}"
+
+    score = 0
+
+    for keyword in keywords:
+
+        keyword_lower = keyword.lower()
+
+        # Strong match in title
+        if keyword_lower in title:
+
+            score += 5
+
+        # Match in description
+        elif keyword_lower in description:
+
+            score += 2
+
+    return score
+
+
+# ==================================================
 # TRENDING SCORE
-# --------------------------------------------------
+# ==================================================
 
 def calculate_trending_score(
     views,
     likes,
     comments,
-    age_hours
+    age_hours,
+    relevance_score=0
 ):
 
     age_hours = max(
@@ -145,6 +188,10 @@ def calculate_trending_score(
         math.log10(
             engagement + 1
         ) * 10
+
+        +
+
+        relevance_score * 3
     )
 
     return round(
@@ -153,26 +200,27 @@ def calculate_trending_score(
     )
 
 
-# --------------------------------------------------
-# MAIN TRENDING FUNCTION
-# --------------------------------------------------
+# ==================================================
+# MAIN FUNCTION
+# ==================================================
 
 def get_trending_videos(
     keywords,
     region_code="CA",
     hours=24,
     limit=5,
-    category_id=None
+    category_id=None,
+    mode="trending"
 ):
 
     videos = []
 
 
     # ==================================================
-    # GENERAL TRENDING
+    # MODE 1: GENERAL TRENDING
     # ==================================================
 
-    if category_id is None:
+    if mode == "trending":
 
         try:
 
@@ -194,53 +242,65 @@ def get_trending_videos(
                         video
                     )
 
-        except Exception:
+        except Exception as e:
 
-            pass
+            print(
+                f"Trending API error: {e}"
+            )
 
 
-        # --------------------------------------------------
-        # SEARCH RECENT TRENDING TERMS
-        # --------------------------------------------------
+    # ==================================================
+    # MODE 2: OFFICIAL YOUTUBE CATEGORY
+    # ==================================================
 
-        for keyword in keywords[:3]:
+    elif mode == "official":
 
-            try:
+        try:
 
-                search_results = (
-                    search_recent_videos(
-                        query=keyword,
-                        region_code=region_code,
-                        hours=hours,
-                        max_results=25
+            popular_videos = (
+                get_most_popular_videos(
+                    region_code=region_code,
+                    max_results=50,
+                    category_id=category_id
+                )
+            )
+
+            for video in popular_videos:
+
+                if is_recent(
+                    video,
+                    hours
+                ):
+
+                    videos.append(
+                        video
                     )
-                )
 
-                videos.extend(
-                    search_results
-                )
+        except Exception as e:
 
-            except Exception:
-
-                continue
+            print(
+                f"Official category API error: {e}"
+            )
 
 
-    # ==================================================
-    # CATEGORY TRENDING
-    # ==================================================
+        # --------------------------------------------------
+        # FALLBACK SEARCH
+        # --------------------------------------------------
 
-    else:
-
-        for keyword in keywords[:3]:
+        if len(videos) < limit:
 
             try:
 
+                query = "|".join(
+                    keywords
+                )
+
                 search_results = (
                     search_recent_videos(
-                        query=keyword,
+                        query=query,
                         region_code=region_code,
                         hours=hours,
-                        max_results=25,
+                        max_results=50,
                         category_id=category_id
                     )
                 )
@@ -249,9 +309,44 @@ def get_trending_videos(
                     search_results
                 )
 
-            except Exception:
+            except Exception as e:
 
-                continue
+                print(
+                    f"Category search error: {e}"
+                )
+
+
+    # ==================================================
+    # MODE 3: CUSTOM CATEGORY SEARCH
+    # ==================================================
+
+    elif mode == "search":
+
+        try:
+
+            # YouTube supports OR searches
+            query = "|".join(
+                keywords
+            )
+
+            search_results = (
+                search_recent_videos(
+                    query=query,
+                    region_code=region_code,
+                    hours=hours,
+                    max_results=50
+                )
+            )
+
+            videos.extend(
+                search_results
+            )
+
+        except Exception as e:
+
+            print(
+                f"Custom category search error: {e}"
+            )
 
 
     # ==================================================
@@ -260,7 +355,6 @@ def get_trending_videos(
 
     unique_videos = {}
 
-
     for video in videos:
 
         video_id = get_video_id(
@@ -268,14 +362,12 @@ def get_trending_videos(
         )
 
         if not video_id:
-
             continue
 
         if not is_recent(
             video,
             hours
         ):
-
             continue
 
         unique_videos[
@@ -289,13 +381,12 @@ def get_trending_videos(
 
 
     # ==================================================
-    # GET VIDEO STATISTICS
+    # GET STATISTICS
     # ==================================================
 
     video_ids = list(
         unique_videos.keys()
     )
-
 
     statistics = (
         get_video_statistics(
@@ -318,7 +409,6 @@ def get_trending_videos(
             {}
         )
 
-
         stats = statistics.get(
             video_id,
             {}
@@ -332,14 +422,12 @@ def get_trending_videos(
             )
         )
 
-
         likes = safe_int(
             stats.get(
                 "likeCount",
                 0
             )
         )
-
 
         comments = safe_int(
             stats.get(
@@ -370,21 +458,52 @@ def get_trending_videos(
         )
 
 
+        # --------------------------------------------------
+        # RELEVANCE
+        # --------------------------------------------------
+
+        relevance_score = 0
+
+        if mode == "search":
+
+            relevance_score = (
+                calculate_relevance(
+                    video,
+                    keywords
+                )
+            )
+
+
+            # Reject completely unrelated results
+
+            if relevance_score == 0:
+
+                continue
+
+
+        # --------------------------------------------------
+        # TREND SCORE
+        # --------------------------------------------------
+
         trend_score = (
             calculate_trending_score(
                 views=views,
                 likes=likes,
                 comments=comments,
-                age_hours=age_hours
+                age_hours=age_hours,
+                relevance_score=relevance_score
             )
         )
 
+
+        # --------------------------------------------------
+        # THUMBNAIL
+        # --------------------------------------------------
 
         thumbnails = snippet.get(
             "thumbnails",
             {}
         )
-
 
         thumbnail = None
 
@@ -413,6 +532,10 @@ def get_trending_videos(
                 )
             )
 
+
+        # --------------------------------------------------
+        # RESULT
+        # --------------------------------------------------
 
         result = {
 
@@ -448,6 +571,8 @@ def get_trending_videos(
                 0
             ),
 
+            "relevance_score": relevance_score,
+
             "trend_score": trend_score
         }
 
@@ -458,7 +583,7 @@ def get_trending_videos(
 
 
     # ==================================================
-    # SORT RESULTS
+    # SORT
     # ==================================================
 
     results.sort(
@@ -472,7 +597,7 @@ def get_trending_videos(
 
 
     # ==================================================
-    # RETURN TOP VIDEOS
+    # RETURN TOP RESULTS
     # ==================================================
 
     return results[:limit]
