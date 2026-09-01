@@ -1,4 +1,4 @@
-```python
+
 import streamlit as st
 import requests
 
@@ -126,4 +126,4 @@ except Exception as e:
     st.error("❌ Something went wrong while connecting to YouTube.")
 
     st.exception(e)
-```
+
