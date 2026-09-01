@@ -18,7 +18,7 @@ def search_recent_videos(
     category_id=None
 ):
     """
-    Search YouTube for videos published recently.
+    Search YouTube for recently published videos.
     """
 
     api_key = get_api_key()
@@ -53,7 +53,7 @@ def search_recent_videos(
 
     if response.status_code != 200:
         raise Exception(
-            f"YouTube API error: "
+            f"YouTube search error: "
             f"{response.status_code} - "
             f"{response.text}"
         )
@@ -63,7 +63,11 @@ def search_recent_videos(
 
 def get_video_statistics(video_ids):
     """
-    Get current statistics for videos.
+    Get current statistics for YouTube videos.
+
+    YouTube allows a maximum of 50 video IDs
+    in one videos.list request, so we process
+    the IDs in batches of 50.
     """
 
     if not video_ids:
@@ -71,51 +75,80 @@ def get_video_statistics(video_ids):
 
     api_key = get_api_key()
 
-    url = f"{BASE_URL}/videos"
-
-    params = {
-        "part": "statistics,contentDetails",
-        "id": ",".join(video_ids),
-        "key": api_key,
-    }
-
-    response = requests.get(
-        url,
-        params=params,
-        timeout=30
-    )
-
-    if response.status_code != 200:
-        raise Exception(
-            f"YouTube statistics error: "
-            f"{response.status_code} - "
-            f"{response.text}"
-        )
-
-    data = response.json()
-
     statistics = {}
 
-    for item in data.get("items", []):
+    # --------------------------------------------------------
+    # PROCESS VIDEO IDS IN BATCHES OF 50
+    # --------------------------------------------------------
 
-        statistics[item["id"]] = {
-            "viewCount": int(
-                item.get("statistics", {}).get(
-                    "viewCount", 0
-                )
-            ),
+    for start in range(
+        0,
+        len(video_ids),
+        50
+    ):
 
-            "likeCount": int(
-                item.get("statistics", {}).get(
-                    "likeCount", 0
-                )
-            ),
+        batch = video_ids[
+            start:start + 50
+        ]
 
-            "commentCount": int(
-                item.get("statistics", {}).get(
-                    "commentCount", 0
-                )
-            )
+        url = f"{BASE_URL}/videos"
+
+        params = {
+            "part": "statistics,contentDetails",
+            "id": ",".join(batch),
+            "key": api_key,
         }
+
+        response = requests.get(
+            url,
+            params=params,
+            timeout=30
+        )
+
+        if response.status_code != 200:
+            raise Exception(
+                f"YouTube statistics error: "
+                f"{response.status_code} - "
+                f"{response.text}"
+            )
+
+        data = response.json()
+
+        for item in data.get(
+            "items",
+            []
+        ):
+
+            video_id = item.get(
+                "id"
+            )
+
+            stats = item.get(
+                "statistics",
+                {}
+            )
+
+            statistics[video_id] = {
+                "viewCount": int(
+                    stats.get(
+                        "viewCount",
+                        0
+                    )
+                ),
+
+                "likeCount": int(
+                    stats.get(
+                        "likeCount",
+                        0
+                    )
+                ),
+
+                "commentCount": int(
+                    stats.get(
+                        "commentCount",
+                        0
+                    )
+                )
+            }
 
     return statistics
