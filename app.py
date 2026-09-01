@@ -41,25 +41,25 @@ st.sidebar.title("⚙️ TrendHub Settings")
 
 # Location
 region_options = {
-    "🇨🇦 Canada": "CA",
-    "🇺🇸 United States": "US",
-    "🇮🇳 India": "IN",
-    "🇬🇧 United Kingdom": "GB",
-    "🇦🇺 Australia": "AU"
-    "New zealand": "NZ",
+    "United States": "US",
+    "Canada": "CA",
+    "United Kingdom": "GB",
+    "India": "IN",
+    "Australia": "AU",
+    "New Zealand": "NZ",
     "Germany": "DE",
-    "fr France": "FR",
-    "it Italy": "IT",
-    "es Spain": "ES",
-    "br Brazil": "BR",
-    "mx Mexico": "MX",
-    "jp Japan": "JP",
-    "kr South Korea": "KR",
-    "cn China": "CN",
-    "sg Singapore": "SG",
-    "ae United Arab Emirates": "AE",
-    "sa Saudi Arabia": "SA",
-    "za South Africa": "ZA"
+    "France": "FR",
+    "Italy": "IT",
+    "Spain": "ES",
+    "Brazil": "BR",
+    "Mexico": "MX",
+    "Japan": "JP",
+    "South Korea": "KR",
+    "China": "CN",
+    "Singapore": "SG",
+    "United Arab Emirates": "AE",
+    "Saudi Arabia": "SA",
+    "South Africa": "ZA",
 }
 
 selected_region = st.sidebar.selectbox(
