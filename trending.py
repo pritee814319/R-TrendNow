@@ -1,4 +1,4 @@
-```python
+
 from datetime import datetime, timezone
 
 from youtube_service import (
@@ -463,4 +463,3 @@ def get_trending_videos(
     return final_results[
         :limit
     ]
-```
