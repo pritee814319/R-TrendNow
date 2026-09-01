@@ -9,9 +9,9 @@ from youtube_service import (
 )
 
 
-# ==================================================
+# --------------------------------------------------
 # GET VIDEO ID
-# ==================================================
+# --------------------------------------------------
 
 def get_video_id(video):
 
@@ -26,9 +26,9 @@ def get_video_id(video):
     return None
 
 
-# ==================================================
+# --------------------------------------------------
 # SAFE INTEGER
-# ==================================================
+# --------------------------------------------------
 
 def safe_int(value, default=0):
 
@@ -36,13 +36,12 @@ def safe_int(value, default=0):
         return int(value)
 
     except (TypeError, ValueError):
-
         return default
 
 
-# ==================================================
+# --------------------------------------------------
 # HOURS SINCE PUBLISHED
-# ==================================================
+# --------------------------------------------------
 
 def hours_since_published(published_at):
 
@@ -55,9 +54,7 @@ def hours_since_published(published_at):
             )
         )
 
-        now = datetime.now(
-            timezone.utc
-        )
+        now = datetime.now(timezone.utc)
 
         seconds = (
             now - published
@@ -65,19 +62,16 @@ def hours_since_published(published_at):
 
         hours = seconds / 3600
 
-        return max(
-            hours,
-            0.01
-        )
+        return max(hours, 0.01)
 
     except Exception:
 
         return 999999
 
 
-# ==================================================
+# --------------------------------------------------
 # CHECK RECENT
-# ==================================================
+# --------------------------------------------------
 
 def is_recent(video, hours):
 
@@ -91,7 +85,6 @@ def is_recent(video, hours):
     )
 
     if not published_at:
-
         return False
 
     age_hours = hours_since_published(
@@ -101,61 +94,15 @@ def is_recent(video, hours):
     return age_hours <= hours
 
 
-# ==================================================
-# CATEGORY RELEVANCE
-# ==================================================
-
-def calculate_relevance(
-    video,
-    keywords
-):
-
-    snippet = video.get(
-        "snippet",
-        {}
-    )
-
-    title = snippet.get(
-        "title",
-        ""
-    ).lower()
-
-    description = snippet.get(
-        "description",
-        ""
-    ).lower()
-
-    text = f"{title} {description}"
-
-    score = 0
-
-    for keyword in keywords:
-
-        keyword_lower = keyword.lower()
-
-        # Strong match in title
-        if keyword_lower in title:
-
-            score += 5
-
-        # Match in description
-        elif keyword_lower in description:
-
-            score += 2
-
-    return score
-
-
-# ==================================================
-# TRENDING SCORE
-# ==================================================
+# --------------------------------------------------
+# TREND SCORE
+# --------------------------------------------------
 
 def calculate_trending_score(
     views,
     likes,
     comments,
-    age_hours,
-    relevance_score=0
+    age_hours
 ):
 
     age_hours = max(
@@ -188,10 +135,6 @@ def calculate_trending_score(
         math.log10(
             engagement + 1
         ) * 10
-
-        +
-
-        relevance_score * 3
     )
 
     return round(
@@ -200,9 +143,9 @@ def calculate_trending_score(
     )
 
 
-# ==================================================
+# --------------------------------------------------
 # MAIN FUNCTION
-# ==================================================
+# --------------------------------------------------
 
 def get_trending_videos(
     keywords,
@@ -217,7 +160,7 @@ def get_trending_videos(
 
 
     # ==================================================
-    # MODE 1: GENERAL TRENDING
+    # MODE 1 — GENERAL TRENDING
     # ==================================================
 
     if mode == "trending":
@@ -242,15 +185,13 @@ def get_trending_videos(
                         video
                     )
 
-        except Exception as e:
+        except Exception:
 
-            print(
-                f"Trending API error: {e}"
-            )
+            pass
 
 
     # ==================================================
-    # MODE 2: OFFICIAL YOUTUBE CATEGORY
+    # MODE 2 — OFFICIAL YOUTUBE CATEGORY
     # ==================================================
 
     elif mode == "official":
@@ -276,32 +217,61 @@ def get_trending_videos(
                         video
                     )
 
-        except Exception as e:
+        except Exception:
 
-            print(
-                f"Official category API error: {e}"
-            )
+            pass
 
 
-        # --------------------------------------------------
-        # FALLBACK SEARCH
-        # --------------------------------------------------
+        # If the official category does not provide
+        # enough recent videos, search using keywords.
 
         if len(videos) < limit:
 
-            try:
+            for keyword in keywords[:3]:
 
-                query = "|".join(
-                    keywords
-                )
+                try:
+
+                    search_results = (
+                        search_recent_videos(
+                            query=keyword,
+                            region_code=region_code,
+                            hours=hours,
+                            max_results=25,
+                            category_id=category_id
+                        )
+                    )
+
+                    videos.extend(
+                        search_results
+                    )
+
+                except Exception:
+
+                    continue
+
+
+    # ==================================================
+    # MODE 3 — CUSTOM CATEGORY
+    # ==================================================
+
+    elif mode == "search":
+
+        # Search several category keywords separately.
+        #
+        # This gives YouTube more flexibility and
+        # avoids losing good results because of one
+        # large OR query.
+
+        for keyword in keywords[:5]:
+
+            try:
 
                 search_results = (
                     search_recent_videos(
-                        query=query,
+                        query=keyword,
                         region_code=region_code,
                         hours=hours,
-                        max_results=50,
-                        category_id=category_id
+                        max_results=25
                     )
                 )
 
@@ -309,44 +279,9 @@ def get_trending_videos(
                     search_results
                 )
 
-            except Exception as e:
+            except Exception:
 
-                print(
-                    f"Category search error: {e}"
-                )
-
-
-    # ==================================================
-    # MODE 3: CUSTOM CATEGORY SEARCH
-    # ==================================================
-
-    elif mode == "search":
-
-        try:
-
-            # YouTube supports OR searches
-            query = "|".join(
-                keywords
-            )
-
-            search_results = (
-                search_recent_videos(
-                    query=query,
-                    region_code=region_code,
-                    hours=hours,
-                    max_results=50
-                )
-            )
-
-            videos.extend(
-                search_results
-            )
-
-        except Exception as e:
-
-            print(
-                f"Custom category search error: {e}"
-            )
+                continue
 
 
     # ==================================================
@@ -354,6 +289,7 @@ def get_trending_videos(
     # ==================================================
 
     unique_videos = {}
+
 
     for video in videos:
 
@@ -388,6 +324,7 @@ def get_trending_videos(
         unique_videos.keys()
     )
 
+
     statistics = (
         get_video_statistics(
             video_ids
@@ -409,6 +346,7 @@ def get_trending_videos(
             {}
         )
 
+
         stats = statistics.get(
             video_id,
             {}
@@ -422,12 +360,14 @@ def get_trending_videos(
             )
         )
 
+
         likes = safe_int(
             stats.get(
                 "likeCount",
                 0
             )
         )
+
 
         comments = safe_int(
             stats.get(
@@ -458,40 +398,12 @@ def get_trending_videos(
         )
 
 
-        # --------------------------------------------------
-        # RELEVANCE
-        # --------------------------------------------------
-
-        relevance_score = 0
-
-        if mode == "search":
-
-            relevance_score = (
-                calculate_relevance(
-                    video,
-                    keywords
-                )
-            )
-
-
-            # Reject completely unrelated results
-
-            if relevance_score == 0:
-
-                continue
-
-
-        # --------------------------------------------------
-        # TREND SCORE
-        # --------------------------------------------------
-
         trend_score = (
             calculate_trending_score(
                 views=views,
                 likes=likes,
                 comments=comments,
-                age_hours=age_hours,
-                relevance_score=relevance_score
+                age_hours=age_hours
             )
         )
 
@@ -571,8 +483,6 @@ def get_trending_videos(
                 0
             ),
 
-            "relevance_score": relevance_score,
-
             "trend_score": trend_score
         }
 
@@ -583,7 +493,7 @@ def get_trending_videos(
 
 
     # ==================================================
-    # SORT
+    # SORT BY TREND SCORE
     # ==================================================
 
     results.sort(
