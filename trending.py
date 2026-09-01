@@ -8,6 +8,27 @@ from youtube_service import (
 
 
 # ============================================================
+# GET VIDEO ID SAFELY
+# ============================================================
+
+def get_video_id(video):
+
+    video_id = video.get("id")
+
+    # Search API format
+    if isinstance(video_id, dict):
+
+        return video_id.get("videoId")
+
+    # Videos API format
+    if isinstance(video_id, str):
+
+        return video_id
+
+    return None
+
+
+# ============================================================
 # TRENDING SCORE
 # ============================================================
 
@@ -23,9 +44,7 @@ def calculate_trending_score(
         0.5
     )
 
-    views_per_hour = (
-        views / hours_old
-    )
+    views_per_hour = views / hours_old
 
     engagement = (
         likes +
@@ -38,19 +57,12 @@ def calculate_trending_score(
     )
 
     score = (
-
         (views_per_hour * 0.60)
-
         +
-
         (engagement * 0.25)
-
         +
-
         (views * 0.10)
-
         +
-
         (recency_factor * 100000)
     )
 
@@ -115,25 +127,14 @@ def get_trending_videos(
 
 
     # ========================================================
-    # REMOVE DUPLICATES
+    # 3. REMOVE DUPLICATES
     # ========================================================
 
     unique_videos = {}
 
     for video in all_videos:
 
-        video_id = (
-            video
-            .get("id", {})
-            .get("videoId")
-        )
-
-        # videos.list returns id as a string
-        if not video_id:
-
-            video_id = video.get(
-                "id"
-            )
+        video_id = get_video_id(video)
 
         if video_id:
 
@@ -153,7 +154,7 @@ def get_trending_videos(
 
 
     # ========================================================
-    # GET STATISTICS
+    # 4. GET STATISTICS
     # ========================================================
 
     video_ids = list(
@@ -166,7 +167,7 @@ def get_trending_videos(
 
 
     # ========================================================
-    # CALCULATE SCORES
+    # 5. CALCULATE TREND SCORE
     # ========================================================
 
     results = []
@@ -178,17 +179,11 @@ def get_trending_videos(
 
     for video in videos:
 
-        video_id = (
-            video
-            .get("id", {})
-            .get("videoId")
-        )
+        video_id = get_video_id(video)
 
         if not video_id:
 
-            video_id = video.get(
-                "id"
-            )
+            continue
 
 
         snippet = video.get(
@@ -203,10 +198,8 @@ def get_trending_videos(
         )
 
 
-        published_string = (
-            snippet.get(
-                "publishedAt"
-            )
+        published_string = snippet.get(
+            "publishedAt"
         )
 
 
@@ -278,13 +271,11 @@ def get_trending_videos(
             "id":
                 video_id,
 
-
             "title":
                 snippet.get(
                     "title",
                     "Untitled"
                 ),
-
 
             "channel":
                 snippet.get(
@@ -292,37 +283,28 @@ def get_trending_videos(
                     "Unknown"
                 ),
 
-
             "published":
                 published_at,
-
 
             "hours_old":
                 hours_old,
 
-
             "views":
                 views,
-
 
             "likes":
                 likes,
 
-
             "comments":
                 comments,
-
 
             "views_per_hour":
                 views_per_hour,
 
-
             "trend_score":
                 score,
 
-
             "thumbnail":
-
                 snippet
                 .get(
                     "thumbnails",
@@ -337,15 +319,13 @@ def get_trending_videos(
                     ""
                 ),
 
-
             "url":
-
                 f"https://www.youtube.com/watch?v={video_id}"
         })
 
 
     # ========================================================
-    # SORT
+    # 6. SORT BY TRENDING SCORE
     # ========================================================
 
     results.sort(
