@@ -1,4 +1,4 @@
-```python
+
 import requests
 import streamlit as st
 
@@ -199,4 +199,4 @@ def safe_int(value):
         ValueError
     ):
         return 0
-```
+
