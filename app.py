@@ -2,7 +2,7 @@
 import streamlit as st
 
 from categories import CATEGORIES
-    from trending import get_trending_videos
+     from trending import get_trending_videos
 
 
 # ============================================================
