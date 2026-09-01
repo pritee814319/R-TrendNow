@@ -157,7 +157,7 @@ st.write(
 try:
 
     with st.spinner(
-        "🔎 Searching YouTube for recent videos..."
+        "🔎 Searching  for recent videos..."
     ):
 
         videos = get_trending_videos(
@@ -278,7 +278,7 @@ try:
 
 
                 st.link_button(
-                    "▶️ Watch on YouTube",
+                    "▶️ Watch on ",
                     video["url"]
                 )
 
