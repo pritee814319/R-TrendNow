@@ -1,4 +1,4 @@
-```python
+
 import streamlit as st
 
 from categories import CATEGORIES
@@ -280,4 +280,4 @@ for index, video in enumerate(
         )
 
     st.divider()
-```
+
