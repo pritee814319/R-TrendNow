@@ -1,4 +1,5 @@
 CATEGORIES = {
+
     "🔥 Trending": {
         "keywords": [
             "viral",
