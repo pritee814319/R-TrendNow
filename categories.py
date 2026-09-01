@@ -1,93 +1,132 @@
 CATEGORIES = {
 
+    # ==================================================
+    # GENERAL TRENDING
+    # ==================================================
+
     "🔥 Trending": {
-        "keywords": [
-            "viral",
-            "trending",
-            "popular",
-            "breaking"
-        ]
+        "mode": "trending",
+        "keywords": []
     },
 
+
+    # ==================================================
+    # CUSTOM CATEGORIES
+    # ==================================================
+
     "🍔 Food": {
+        "mode": "search",
         "keywords": [
             "food",
             "recipe",
             "cooking",
             "street food",
-            "food viral"
+            "restaurant",
+            "food review",
+            "food vlog"
         ]
     },
 
+
     "💃 Dance": {
+        "mode": "search",
         "keywords": [
             "dance",
             "dance trend",
             "viral dance",
             "choreography",
-            "dance challenge"
+            "dance challenge",
+            "dance performance"
         ]
     },
 
+
     "❤️ Health": {
+        "mode": "search",
         "keywords": [
             "health",
             "fitness",
             "workout",
             "wellness",
-            "healthy lifestyle"
+            "healthy lifestyle",
+            "exercise",
+            "nutrition"
         ]
     },
 
+
+    # ==================================================
+    # OFFICIAL YOUTUBE CATEGORY
+    # ==================================================
+
     "🎵 Music": {
+        "mode": "official",
+        "category_id": "10",
         "keywords": [
+            "music",
             "new music",
             "new song",
-            "music",
             "official music video",
             "viral song"
-        ],
-        "category_id": "10"
+        ]
     },
 
+
     "🎨 Art": {
+        "mode": "search",
         "keywords": [
             "art",
             "drawing",
             "digital art",
             "artist",
-            "art tutorial"
+            "art tutorial",
+            "sketching",
+            "illustration"
         ]
     },
 
+
     "🖼️ Paintings": {
+        "mode": "search",
         "keywords": [
             "painting",
             "oil painting",
             "watercolor painting",
             "acrylic painting",
-            "painting tutorial"
+            "painting tutorial",
+            "canvas painting",
+            "painting process"
         ]
     },
 
+
     "👧 Kids": {
+        "mode": "search",
         "keywords": [
             "kids",
             "kids activities",
             "kids entertainment",
             "family",
-            "children"
+            "children",
+            "kids learning",
+            "kids games"
         ]
     },
 
+
+    # ==================================================
+    # OFFICIAL YOUTUBE CATEGORY
+    # ==================================================
+
     "📰 News": {
+        "mode": "official",
+        "category_id": "25",
         "keywords": [
             "breaking news",
             "latest news",
             "news today",
             "world news",
             "current news"
-        ],
-        "category_id": "25"
+        ]
     }
 }
